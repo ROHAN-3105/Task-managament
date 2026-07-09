@@ -129,3 +129,81 @@ You can verify the routing logic and auth protections using the automated script
 ```bash
 python backend/verify_app.py
 ```
+
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to improve TaskFlow, please follow these steps:
+
+1. Fork the repository.
+2. Create a new feature branch.
+3. Make your changes.
+4. Commit your changes following the commit message guidelines below.
+5. Push your branch and create a Pull Request.
+
+---
+
+## 📝 Commit Message Guidelines
+
+Please use clear and meaningful commit messages.
+
+### Format
+
+```text
+<type>: <short description>
+```
+
+### Common Types
+
+| Type | Description |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation changes |
+| `style` | Formatting, UI, CSS changes |
+| `refactor` | Code restructuring without changing functionality |
+| `perf` | Performance improvements |
+| `test` | Adding or updating tests |
+| `chore` | Build process, dependencies, miscellaneous updates |
+
+### Examples
+
+```bash
+feat: add employee dashboard analytics
+fix: resolve task status update issue
+docs: update installation guide
+style: improve login page responsiveness
+refactor: optimize database connection handling
+perf: reduce dashboard loading time
+test: add authentication route tests
+chore: update project dependencies
+```
+
+---
+
+## 📌 Git Workflow
+
+```bash
+# Clone repository
+git clone <repository-url>
+
+# Create a new branch
+git checkout -b feature/your-feature-name
+
+# Stage changes
+git add .
+
+# Commit changes
+git commit -m "feat: add task priority filter"
+
+# Push changes
+git push origin feature/your-feature-name
+```
+
+---
+
+## ⭐ Support
+
+If you found this project useful, consider giving it a ⭐ on GitHub. It helps others discover the project and motivates future improvements.
