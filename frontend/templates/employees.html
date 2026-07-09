@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Employees - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Employees</h1>
+        <p><span id="employee-count">{{ employees | length }}</span> team members</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">
+        <svg stroke="currentColor" viewBox="0 0 24 24" style="width:18px; height:18px; fill:none; stroke-width:2;">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Employee
+    </button>
+</div>
+
+<!-- Search Controls -->
+<div class="control-bar">
+    <div class="search-box">
+        <svg stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="employee-search" placeholder="Search employees..." onkeyup="filterEmployees()">
+    </div>
+</div>
+
+<!-- Responsive Table -->
+<div class="table-responsive">
+    <table class="custom-table" id="employees-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employees %}
+            <tr class="employee-row">
+                <td>
+                    <div class="user-info-cell">
+                        <div class="user-avatar-sm">
+                            {{ emp.name[0] | upper }}
+                        </div>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:600;">{{ emp.name }}</span>
+                            <span style="font-size:11px; color:var(--text-muted);">@{{ emp.username }} ({{ emp.role }})</span>
+                        </div>
+                    </div>
+                </td>
+                <td>{{ emp.email }}</td>
+                <td>{{ emp.phone or 'N/A' }}</td>
+                <td>
+                    <span class="badge badge-dept">{{ emp.department }}</span>
+                </td>
+                <td style="font-weight: 500;">{{ emp.designation }}</td>
+                <td>
+                    <div class="actions-cell">
+                        <!-- Edit Button with Data Attributes -->
+                        <button class="action-btn" title="Edit Employee" 
+                                onclick="openEditModal(this)"
+                                data-id="{{ emp.employee_id }}"
+                                data-name="{{ emp.name }}"
+                                data-email="{{ emp.email }}"
+                                data-phone="{{ emp.phone }}"
+                                data-department="{{ emp.department }}"
+                                data-designation="{{ emp.designation }}"
+                                data-username="{{ emp.username }}"
+                                data-role="{{ emp.role }}">
+                            <svg stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Delete Form -->
+                        <form action="{{ url_for('delete_employee', id=emp.employee_id) }}" method="POST" class="delete-form" style="display:inline;" onsubmit="return confirmDelete('{{ emp.name }}');">
+                            <button type="submit" class="action-btn delete-btn" title="Delete Employee">
+                                <svg stroke="currentColor" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr id="no-employees-found" style="display: none;">
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                    No employees found matching your search.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Employee Modal Overlay -->
+<div class="modal-overlay" id="add-employee-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Add New Employee</h3>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <form action="{{ url_for('add_employee') }}" method="POST">
+            <div class="form-group">
+                <label for="add-name">Full Name</label>
+                <input type="text" id="add-name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group">
+                <label for="add-email">Email Address</label>
+                <input type="email" id="add-email" name="email" class="form-control" placeholder="e.g. john.doe@company.com" required>
+            </div>
+            <div class="form-group">
+                <label for="add-phone">Phone Number</label>
+                <input type="text" id="add-phone" name="phone" class="form-control" placeholder="e.g. +1-555-0199" required>
+            </div>
+            <div class="form-group">
+                <label for="add-department">Department</label>
+                <select id="add-department" name="department" class="form-control" required>
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Sales">Sales</option>
+                    <option value="HR">HR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="add-designation">Designation</label>
+                <input type="text" id="add-designation" name="designation" class="form-control" placeholder="e.g. Frontend Developer" required>
+            </div>
+            <div class="form-group">
+                <label for="add-username">Username</label>
+                <input type="text" id="add-username" name="username" class="form-control" placeholder="e.g. johndoe" required>
+            </div>
+            <div class="form-group">
+                <label for="add-password">Password</label>
+                <input type="password" id="add-password" name="password" class="form-control" placeholder="Create login password" required>
+            </div>
+            <div class="form-group">
+                <label for="add-role">System Role</label>
+                <select id="add-role" name="role" class="form-control" required>
+                    <option value="Employee" selected>Employee</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Employee Modal Overlay -->
+<div class="modal-overlay" id="edit-employee-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Edit Employee</h3>
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form action="" method="POST" id="edit-employee-form">
+            <div class="form-group">
+                <label for="edit-name">Full Name</label>
+                <input type="text" id="edit-name" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-email">Email Address</label>
+                <input type="email" id="edit-email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-phone">Phone Number</label>
+                <input type="text" id="edit-phone" name="phone" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-department">Department</label>
+                <select id="edit-department" name="department" class="form-control" required>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Sales">Sales</option>
+                    <option value="HR">HR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit-designation">Designation</label>
+                <input type="text" id="edit-designation" name="designation" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-username">Username</label>
+                <input type="text" id="edit-username" name="username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-password">Password (Leave blank to keep current)</label>
+                <input type="password" id="edit-password" name="password" class="form-control" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label for="edit-role">System Role</label>
+                <select id="edit-role" name="role" class="form-control" required>
+                    <option value="Employee">Employee</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

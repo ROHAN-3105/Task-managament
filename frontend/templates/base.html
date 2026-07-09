@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskFlow - Task Management System{% endblock %}</title>
+    
+    <!-- Core Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Page Loader Spinner -->
+    <div id="loader-wrapper">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Flashed Messages from Flask -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast show {{ category }}" data-autohide="true">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm0 8H7v-2h10v2z"/>
+                </svg>
+                <span>TaskFlow</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="sidebar-item {% if request.path == '/dashboard' %}active{% endif %}">
+                    <a href="{{ url_for('dashboard') }}">
+                        <svg stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                
+                {% if current_user_role in ['Admin', 'Manager'] %}
+                <li class="sidebar-item {% if request.path == '/employees' %}active{% endif %}">
+                    <a href="{{ url_for('employees') }}">
+                        <svg stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Employees
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="sidebar-item {% if request.path == '/tasks' or request.path.startswith('/task/') %}active{% endif %}">
+                    <a href="{{ url_for('tasks') }}">
+                        <svg stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        Tasks
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <li class="sidebar-item" style="list-style:none;">
+                    <a href="{{ url_for('logout') }}" style="color:#ef4444;">
+                        <svg stroke="#ef4444" viewBox="0 0 24 24">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </a>
+                </li>
+            </div>
+        </aside>
+
+        <!-- Main Body Wrapper -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="navbar">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <button class="menu-toggle-btn" id="sidebar-toggle" aria-label="Toggle Sidebar">
+                        <svg stroke="currentColor" viewBox="0 0 24 24">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="navbar-welcome">
+                        Welcome back, <span>{{ current_user_name }}</span>
+                    </div>
+                </div>
+                
+                <div class="navbar-actions">
+                    <!-- Dark/Light Theme Button Toggle -->
+                    <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Theme">
+                        <svg viewBox="0 0 24 24" id="theme-icon">
+                            <!-- Moon Icon default -->
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Profile Widget -->
+                    <div class="user-profile-badge">
+                        <div class="profile-avatar">
+                            {{ current_user_name[0] | upper if current_user_name else 'U' }}
+                        </div>
+                        <div class="profile-info">
+                            <span class="profile-name">{{ current_user_name }}</span>
+                            <span class="profile-role">{{ current_user_role }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Render specific child views -->
+            <div class="fade-in">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js CDN for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Core JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - TaskFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+    <!-- Loader wrapper -->
+    <div id="loader-wrapper">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast show {{ category }}">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Login Glass Container Card -->
+    <div class="auth-card">
+        <!-- Floating theme controller -->
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Theme">
+                <svg viewBox="0 0 24 24" id="theme-icon">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="auth-header">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm0 8H7v-2h10v2z"/>
+                </svg>
+            </div>
+            <div class="auth-title">
+                <h2>Welcome to TaskFlow</h2>
+                <p>Manage your enterprise tasks smoothly</p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('login') }}" method="POST" id="login-form">
+            <!-- Username Input -->
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+            </div>
+
+            <!-- Password Input -->
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <!-- Role Dropdown -->
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" class="form-control" required style="cursor:pointer;">
+                    <option value="" disabled selected>Select your system role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Employee">Employee</option>
+                </select>
+            </div>
+
+            <!-- Remember me row -->
+            <div class="form-group auth-helper" style="margin-top: 10px;">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="remember-me"> Remember Me
+                </label>
+            </div>
+
+            <!-- Submit Action -->
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 16px; padding: 14px;">
+                Sign In
+            </button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

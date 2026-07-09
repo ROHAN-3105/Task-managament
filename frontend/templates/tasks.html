@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Tasks - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Tasks</h1>
+        <p><span id="task-count">{{ tasks | length }}</span> total tasks</p>
+    </div>
+    {% if current_user_role in ['Admin', 'Manager'] %}
+    <a href="{{ url_for('add_task') }}" class="btn btn-primary">
+        <svg stroke="currentColor" viewBox="0 0 24 24" style="width:18px; height:18px; fill:none; stroke-width:2;">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Create Task
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search & Filtering Controls -->
+<div class="control-bar">
+    <div class="search-box">
+        <svg stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="task-search" placeholder="Search tasks..." onkeyup="filterTasks()">
+    </div>
+    
+    <div class="filters-group">
+        <select id="status-filter" class="select-input" onchange="filterTasks()">
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+        </select>
+        
+        <select id="priority-filter" class="select-input" onchange="filterTasks()">
+            <option value="All">All Priority</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+    </div>
+</div>
+
+<!-- Tasks Cards Grid -->
+<div class="tasks-grid" id="tasks-container">
+    {% for task in tasks %}
+    <div class="task-card" data-title="{{ task.title }}" data-desc="{{ task.description }}" data-status="{{ task.status }}" data-priority="{{ task.priority }}" data-assignee="{{ task.assignee_name }}">
+        
+        <!-- Header: Priority & Status Badges -->
+        <div class="task-card-header">
+            <div class="task-badges">
+                <span class="badge badge-{{ task.priority | lower }}">{{ task.priority }}</span>
+                <span class="badge badge-{{ task.status | lower | replace(' ', '_') }}">{{ task.status }}</span>
+            </div>
+            
+            <!-- Quick Actions (Admin/Manager Only) -->
+            {% if current_user_role in ['Admin', 'Manager'] %}
+            <div class="task-actions">
+                <a href="{{ url_for('edit_task', id=task.task_id) }}" class="action-btn" title="Edit Task">
+                    <svg stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </a>
+                
+                <form action="{{ url_for('delete_task', id=task.task_id) }}" method="POST" class="delete-form" style="display:inline;" onsubmit="return confirmDeleteTask('{{ task.title }}');">
+                    <button type="submit" class="action-btn delete-btn" title="Delete Task">
+                        <svg stroke="currentColor" viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Title & Description -->
+        <h3 class="task-title" onclick="openTaskDetailModal('{{ task.title }}', '{{ task.description }}', '{{ task.priority }}', '{{ task.status }}', '{{ task.due_date }}', '{{ task.assignee_name }}', '{{ task.assignee_email }}')">
+            {{ task.title }}
+        </h3>
+        <p class="task-description">{{ task.description or 'No description provided.' }}</p>
+        
+        <!-- Due Date info -->
+        <div class="task-due">
+            <svg stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Due on {{ task.due_date.strftime('%b %d, %Y') if task.due_date is not string else task.due_date }}</span>
+        </div>
+        
+        <!-- Footer: Assignee avatar & Quick status update dropdown -->
+        <div class="task-card-footer">
+            <div class="task-assignee">
+                <div class="user-avatar-sm" style="width:24px; height:24px; font-size:10px;">
+                    {{ task.assignee_name[0] | upper }}
+                </div>
+                <span>{{ task.assignee_name }}</span>
+            </div>
+            
+            <!-- Direct status dropdown (Submit on change) -->
+            {% if current_user_role in ['Admin', 'Manager'] or session.get('employee_id') == task.assigned_to %}
+            <form action="{{ url_for('update_task_status', id=task.task_id) }}" method="POST" class="status-update-form">
+                <select name="status" class="select-input btn-sm" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 11px; font-weight:600; border-radius: 8px;">
+                    <option value="Pending" {% if task.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    <div id="no-tasks-found" style="display: none; grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 48px;">
+        No tasks found matching your filters.
+    </div>
+</div>
+
+<!-- Task Details Modal Overlay -->
+<div class="modal-overlay" id="task-detail-modal">
+    <div class="modal-container" style="max-width: 550px;">
+        <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+            <h3 id="detail-title">Task Details</h3>
+            <button class="modal-close" onclick="closeTaskDetailModal()">&times;</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap: 16px; margin-top: 16px;">
+            <div style="display:flex; gap: 10px;">
+                <span class="badge" id="detail-priority"></span>
+                <span class="badge" id="detail-status"></span>
+            </div>
+            <div>
+                <strong style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">Description</strong>
+                <p id="detail-desc" style="font-size:14px; line-height:1.6; margin-top: 6px; color:var(--text-primary); white-space: pre-line;"></p>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; border-top:1px solid var(--border-color); padding-top:16px;">
+                <div>
+                    <strong style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">Assigned To</strong>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top: 6px;">
+                        <div class="user-avatar-sm" id="detail-avatar" style="width:28px; height:28px; font-size:11px;"></div>
+                        <div style="display:flex; flex-direction:column;">
+                            <span id="detail-assignee-name" style="font-size:13px; font-weight:600;"></span>
+                            <span id="detail-assignee-email" style="font-size:11px; color:var(--text-muted);"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <strong style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">Due Date</strong>
+                    <p id="detail-due" style="font-size:13px; font-weight:500; margin-top: 8px; display:flex; align-items:center; gap:6px;">
+                        <svg stroke="currentColor" viewBox="0 0 24 24" style="width:16px; height:16px; fill:none; stroke-width:2;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span id="detail-due-span"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--border-color); padding-top:16px;">
+            <button type="button" class="btn btn-secondary" onclick="closeTaskDetailModal()">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
