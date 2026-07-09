@@ -123,8 +123,14 @@ For testing purposes, the initialization script sets up the following users:
 | `/task/update-status/<id>`| `POST` | Assignee, Admin, Manager | Updates task status value instantly |
 
 ---
+## 🔒 Security
 
-## 🧪 Verification Tests
+- Password hashing
+- Parameterized SQL queries
+- Session-based authentication
+- Role-based access control
+---
+## 🧪 Verification Test
 You can verify the routing logic and auth protections using the automated script:
 ```bash
 python backend/verify_app.py
